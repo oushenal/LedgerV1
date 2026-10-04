@@ -330,6 +330,18 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .banner-soon .t { font-weight: 700; }
 .banner-soon .d { font-size: 12.5px; color: var(--sub); }
 
+/* ---------- 响应式：桌面端（≥769px）----------
+ * 预算大类排成「一行」：图标 + 名称/日额度 ←撑开→ 月额度 / 均摊 / 结转 + 删除键
+ * 用 display:contents 把 bi-head 的三个子元素提到本行参与排列，
+ * 这样不动物件结构、也不影响 ≤768px 的两行布局 */
+@media (min-width: 769px) {
+  .budget-item { display: flex; align-items: center; gap: 10px 22px; flex-wrap: wrap; }
+  .bi-head { display: contents; }
+  .bi-head .grow { flex: 1 1 240px; min-width: 0; }
+  .bi-ctrl { margin-top: 0; padding-left: 0; flex: 0 0 auto; }
+  .bi-head [data-del-cat] { order: 9; }   /* 删除键移到整行最右 */
+}
+
 /* ---------- 响应式：手机端 ---------- */
 @media (max-width: 900px) {
   .grid-4 { grid-template-columns: repeat(2, 1fr); }
