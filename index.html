@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#F7F4EE">
+  <title>轻账本 · 先预算后记账</title>
+  <meta name="description" content="先预算、后记账的个人开支管理：分大类额度、每日均摊、浮动资金、明细导出。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%2394A89A'/%3E%3Ctext x='16' y='22' font-size='17' text-anchor='middle' fill='white' font-family='sans-serif' font-weight='bold'%3E%E8%BD%BB%3C/text%3E%3C/svg%3E">
+  <link rel="stylesheet" href="assets/app.css?v=1">
+</head>
+<body data-theme="green" data-font="normal">
+  <div id="app"><div class="login-wrap"><div class="card">载入中…</div></div></div>
+
+  <!-- 配置（含可公开的 publishable key） -->
+  <script src="assets/config.js?v=1"></script>
+  <!-- 本地 vendor：supabase-js 自打包单文件 / SheetJS -->
+  <script src="assets/vendor/supabase.min.js?v=1"></script>
+  <script src="assets/vendor/xlsx.full.min.js?v=1"></script>
+  <!-- 业务代码 -->
+  <script src="assets/store.js?v=1"></script>
+  <script src="assets/app.js?v=1"></script>
+</body>
+</html>
