@@ -164,7 +164,7 @@ QBZ.app = (function () {
         return '<a class="nav-item ' + (r.id === route ? 'active' : '') + '" href="#/' + r.id + '">' +
           ic(ICONS[r.icon]) + '<span>' + r.name + '</span></a>';
       }).join('') +
-      '<div class="sidebar-foot">轻账本 v1.0<br>数据存于个人 Supabase</div>' +
+      '<div class="sidebar-foot">轻账本 v1.1<br>数据存于个人 Supabase</div>' +
       '</aside>' +
       '<main class="main">' +
       '<div class="topbar">' +
@@ -274,6 +274,9 @@ QBZ.app = (function () {
     var dailyCats = cats.filter(function (c) { return c.is_daily && !c.is_float; });
     var floatCats = cats.filter(function (c) { return c.is_float; });
     var today = todayStr();
+    var todayTx = store.state.transactions.filter(function (t) { return t.spent_at.slice(0, 10) === today; });
+    var txCountByCat = {};
+    todayTx.forEach(function (t) { txCountByCat[t.category_id] = (txCountByCat[t.category_id] || 0) + 1; });
 
     var quotaSum = dailyCats.reduce(function (s, c) { return s + store.dailyQuota(c, store.state.month); }, 0);
     var spentSum = dailyCats.reduce(function (s, c) { return s + (st.todaySpentByCat[c.id] || 0); }, 0);
@@ -292,13 +295,18 @@ QBZ.app = (function () {
       var q = store.dailyQuota(c, store.state.month);
       var spent = st.todaySpentByCat[c.id] || 0;
       var bal = store.round2(q - spent);
-      html += '<div class="row-line" data-cat="' + c.id + '">' +
+      var n = txCountByCat[c.id] || 0;
+      html += '<div class="cat-block" data-cat="' + c.id + '">' +
+        '<div class="cat-head">' +
         catBadge(c, 38) +
-        '<div class="grow"><div style="font-weight:600">' + esc(c.name) + '</div>' +
-        '<div class="desc">额度 ' + money(q) + ' · 已登记 ' + money(spent) + '</div></div>' +
-        '<div class="num" style="font-weight:700;color:' + (bal < 0 ? 'var(--danger)' : 'inherit') + '">' + money(bal) + '</div>' +
+        '<div class="grow"><div class="cat-name-x">' + esc(c.name) + '</div>' +
+        '<div class="desc">日额度 ' + money(q) + '</div></div>' +
+        '<div class="cat-bal num' + (bal < 0 ? ' neg' : '') + '">' + money(bal) + '</div>' +
         '<button class="icon-btn" data-add="' + c.id + '" title="登记支出">' + ic(ICONS.plus, 17) + '</button>' +
-        '<div class="add-inline" id="form-' + c.id + '" style="display:none;width:100%">' +
+        '</div>' +
+        '<div class="cat-sub"><span>已登记 <b class="num">' + money(spent) + '</b></span>' +
+        '<span>今日 ' + n + ' 笔</span></div>' +
+        '<div class="cat-form" id="form-' + c.id + '" style="display:none">' +
         '<input class="input num" type="number" min="0" step="0.01" placeholder="金额" id="amt-' + c.id + '">' +
         '<input class="input note" type="text" placeholder="备注（可选）" id="note-' + c.id + '">' +
         '<button class="btn small" data-save="' + c.id + '">登记</button>' +
@@ -312,12 +320,18 @@ QBZ.app = (function () {
     floatCats.forEach(function (c) {
       var spent = st.spentByCat[c.id] || 0;
       var bal = store.round2(c.quota - spent);
-      html += '<div class="row-line" data-cat="' + c.id + '">' +
+      var n = txCountByCat[c.id] || 0;
+      html += '<div class="cat-block" data-cat="' + c.id + '">' +
+        '<div class="cat-head">' +
         catBadge(c, 38) +
-        '<div class="grow"><div style="font-weight:600">' + esc(c.name) + '</div>' +
-        '<div class="desc">余额 ' + money(bal) + ' / ' + money(c.quota) + '</div></div>' +
+        '<div class="grow"><div class="cat-name-x">' + esc(c.name) + '</div>' +
+        '<div class="desc">月额度 ' + money(c.quota) + '</div></div>' +
+        '<div class="cat-bal num' + (bal < 0 ? ' neg' : '') + '">' + money(bal) + '</div>' +
         '<button class="icon-btn" data-add="' + c.id + '" title="自定义支出">' + ic(ICONS.plus, 17) + '</button>' +
-        '<div class="add-inline" id="form-' + c.id + '" style="display:none;width:100%">' +
+        '</div>' +
+        '<div class="cat-sub"><span>本月已用 <b class="num">' + money(spent) + '</b></span>' +
+        '<span>今日 ' + n + ' 笔</span></div>' +
+        '<div class="cat-form" id="form-' + c.id + '" style="display:none">' +
         '<input class="input num" type="number" min="0" step="0.01" placeholder="金额" id="amt-' + c.id + '">' +
         '<input class="input note" type="text" placeholder="自定义备注（如：奶茶）" id="note-' + c.id + '">' +
         '<button class="btn small" data-save="' + c.id + '">登记</button>' +
@@ -326,7 +340,6 @@ QBZ.app = (function () {
     html += '</div>';
 
     // 今日流水
-    var todayTx = store.state.transactions.filter(function (t) { return t.spent_at.slice(0, 10) === today; });
     html += '<div class="card"><div class="card-title">今日记录<span class="more">' + todayTx.length + ' 笔</span></div>';
     if (!todayTx.length) html += '<div class="empty">今天还没登记支出。</div>';
     todayTx.forEach(function (t) { html += txLine(t); });
@@ -348,17 +361,23 @@ QBZ.app = (function () {
       '<button class="icon-btn plain" data-del-tx="' + t.id + '" title="删除">' + ic(ICONS.trash, 15) + '</button></div>';
   }
 
+  /* 记住展开状态：重新渲染（登记一笔后）仍保持展开，方便连续登记 */
+  var openForms = {};
   function bindToday() {
     $$('#view [data-add]').forEach(function (b) {
+      var cid = b.dataset.add;
+      var f = $('#form-' + cid);
+      if (openForms[cid]) f.style.display = 'flex';
       b.onclick = function () {
-        var f = $('#form-' + b.dataset.add);
-        f.style.display = f.style.display === 'none' ? 'flex' : 'none';
-        if (f.style.display === 'flex') $('#amt-' + b.dataset.add).focus();
+        var open = f.style.display === 'none';
+        f.style.display = open ? 'flex' : 'none';
+        openForms[cid] = open;
+        if (open) $('#amt-' + cid).focus();
       };
     });
     $$('#view [data-save]').forEach(function (b) {
-      b.onclick = async function () {
-        var cid = b.dataset.save;
+      var cid = b.dataset.save;
+      var save = async function () {
         var amt = parseFloat($('#amt-' + cid).value);
         var note = $('#note-' + cid).value.trim();
         if (!amt || amt <= 0) { toast('请输入有效金额'); return; }
@@ -371,6 +390,11 @@ QBZ.app = (function () {
         toast('已登记');
         render();
       };
+      b.onclick = save;
+      // 输入框里按回车直接登记，少点一次
+      [$('#amt-' + cid), $('#note-' + cid)].forEach(function (inp) {
+        if (inp) inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') save(); });
+      });
     });
     bindTxDeletes();
   }
@@ -397,26 +421,37 @@ QBZ.app = (function () {
     var month = store.state.month;
 
     var html = '<div class="card"><div class="card-title">本月收入</div>' +
-      '<div style="display:flex;gap:10px;max-width:360px">' +
+      '<div class="income-row">' +
       '<input class="input num" type="number" min="0" step="0.01" id="income" value="' + (store.state.monthRow ? store.state.monthRow.income : 0) + '">' +
       '<button class="btn" id="save-income">保存</button></div>' +
       '<div class="desc" style="font-size:12.5px;color:var(--sub);margin-top:8px">收入随时可改；各大类额度合计建议不超过收入。</div></div>';
 
     html += '<div class="card"><div class="card-title">支出大类<span class="more">' + month + ' · ' + cats.length + ' 类</span></div>';
+
+    // 额度合计条：所有支出大类的月额度总和（随输入实时刷新）
+    html += '<div class="sum-bar">' +
+      '<div><span class="k">支出大类额度合计</span><span class="v num" id="sum-quota">—</span></div>' +
+      '<div><span class="k">本月收入</span><span class="v num" id="sum-income">—</span></div>' +
+      '<div><span class="k">额度占收入</span><span class="v num" id="sum-pct">—</span></div>' +
+      '<div><span class="k">收入 − 额度</span><span class="v num" id="sum-left">—</span></div>' +
+      '</div>';
+
     cats.forEach(function (c) {
-      html += '<div class="row-line" data-cat-row="' + c.id + '">' +
+      html += '<div class="budget-item" data-cat-row="' + c.id + '">' +
+        '<div class="bi-head">' +
         catBadge(c, 38) +
         '<div class="grow"><div style="font-weight:600">' + esc(c.name) +
         (c.is_float ? ' <span class="tag custom">浮动</span>' : (c.is_daily ? ' <span class="tag">均摊</span>' : '')) + '</div>' +
         (c.is_daily && !c.is_float ? '<div class="desc">日额度 ≈ ' + money(store.dailyQuota(c, month)) + '（' + store.daysInMonth(month) + ' 天）</div>' : '') +
         '</div>' +
-        '<div style="display:flex;align-items:center;gap:6px"><span style="font-size:12.5px;color:var(--sub)">月额度</span>' +
-        '<input class="input num" type="number" min="0" step="1" style="width:96px" data-quota="' + c.id + '" value="' + c.quota + '"></div>' +
-        '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--sub)">均摊' +
-        '<span class="switch"><input type="checkbox" data-daily="' + c.id + '" ' + (c.is_daily ? 'checked' : '') + (c.is_float ? ' disabled' : '') + '><i></i></span></label>' +
-        '<label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--sub)">结转' +
-        '<span class="switch"><input type="checkbox" data-roll="' + c.id + '" ' + (c.is_rollover ? 'checked' : '') + '><i></i></span></label>' +
         '<button class="icon-btn plain" data-del-cat="' + c.id + '" title="删除大类">' + ic(ICONS.trash, 15) + '</button>' +
+        '</div>' +
+        '<div class="bi-ctrl">' +
+        '<label class="bi-field"><span>月额度</span>' +
+        '<input class="input num" type="number" min="0" step="1" data-quota="' + c.id + '" value="' + c.quota + '"></label>' +
+        '<label class="bi-field"><span>均摊</span><span class="switch"><input type="checkbox" data-daily="' + c.id + '" ' + (c.is_daily ? 'checked' : '') + (c.is_float ? ' disabled' : '') + '><i></i></span></label>' +
+        '<label class="bi-field"><span>结转</span><span class="switch"><input type="checkbox" data-roll="' + c.id + '" ' + (c.is_rollover ? 'checked' : '') + '><i></i></span></label>' +
+        '</div>' +
         '</div>';
     });
     html += '</div>';
@@ -436,6 +471,33 @@ QBZ.app = (function () {
 
     $('#view').innerHTML = html;
 
+    /* 额度合计条：直接读输入框实时算，改一个数字就跟着变 */
+    function refreshBudgetSum() {
+      var sum = 0;
+      $$('#view [data-quota]').forEach(function (i) {
+        var v = parseFloat(i.value);
+        if (!isNaN(v) && v > 0) sum += v;
+      });
+      sum = store.round2(sum);
+      var inc = parseFloat($('#income').value); if (isNaN(inc) || inc < 0) inc = 0;
+      var left = store.round2(inc - sum);
+      $('#sum-quota').textContent = money(sum);
+      $('#sum-income').textContent = money(inc);
+      var pctEl = $('#sum-pct'), leftEl = $('#sum-left');
+      if (inc > 0) {
+        var pct = Math.round(sum / inc * 1000) / 10;
+        pctEl.textContent = pct + '%';
+        pctEl.classList.toggle('over', pct > 100);
+      } else {
+        pctEl.textContent = '—';
+        pctEl.classList.remove('over');
+      }
+      leftEl.textContent = money(left);
+      leftEl.classList.toggle('over', left < 0);
+    }
+    refreshBudgetSum();
+    $('#income').addEventListener('input', refreshBudgetSum);
+
     $('#save-income').onclick = async function () {
       var v = parseFloat($('#income').value);
       if (isNaN(v) || v < 0) { toast('请输入有效金额'); return; }
@@ -444,6 +506,7 @@ QBZ.app = (function () {
       toast('收入已保存');
     };
     $$('#view [data-quota]').forEach(function (inp) {
+      inp.addEventListener('input', refreshBudgetSum);
       inp.onchange = async function () {
         var v = parseFloat(inp.value);
         if (isNaN(v) || v < 0) { render(); return; }
@@ -759,7 +822,12 @@ QBZ.app = (function () {
    * ============================================================ */
   function render() {
     if (!store.state.user) { renderLogin(); return; }
-    if (!store.state.ready) { $('#app').innerHTML = '<div class="login-wrap"><div class="card">载入中…</div></div>'; return; }
+    if (!store.state.ready) {
+      // 自愈：只要还有登录态，就主动补一次装载，绝不永久停在「载入中」
+      $('#app').innerHTML = '<div class="login-wrap"><div class="card">载入中…</div></div>';
+      ensureBoot(store.state.user);
+      return;
+    }
     renderShell();
     var r = currentRoute();
     if (r === 'overview') viewOverview();
@@ -769,29 +837,43 @@ QBZ.app = (function () {
     else if (r === 'me') viewMe();
   }
 
+  /* 登录态 / 数据装载：可重复调用，用 bootedFor + booting 去重
+   * 旧写法只在「首次认证事件」里装载，而 Supabase 会在切屏、长时间停留时自动刷新 token，
+   * 每次都把 state.ready 置回 false —— 但那时 bootedFor 已等于当前用户，于是直接 render()，
+   * 界面就永远停在「载入中」，必须刷新页面才恢复。 */
+  var bootedFor = null, booting = null;
+  function ensureBoot(user) {
+    if (!user) return Promise.resolve();
+    if (bootedFor === user.id && store.state.ready) { render(); return Promise.resolve(); }
+    if (booting) return booting;
+    booting = (async function () {
+      try {
+        await store.loadMonth();
+        var ms = await store.listMonths();
+        store.listMonthsCache = ms.length ? ms : [store.state.month];
+        bootedFor = user.id;
+        render();
+      } catch (e) {
+        console.error(e);
+        alert('数据载入失败：' + e.message + '\n\n如果是新账号，请先在 Supabase SQL Editor 执行 supabase-schema.sql 建表。');
+      } finally { booting = null; }
+    })();
+    return booting;
+  }
+
   async function boot() {
     applyPrefs();
     await store.init();
     store.onSync(updateSyncBadge);
-    var bootedFor = null, booting = null;
     store.onAuth(function (user) {
-      if (!user) { render(); return; }
-      if (bootedFor === user.id) { render(); return; }
-      if (booting) return;                       // 正在启动，跳过重复触发
-      booting = (async function () {
-        try {
-          await store.loadMonth();
-          var ms = await store.listMonths();
-          store.listMonthsCache = ms.length ? ms : [store.state.month];
-          bootedFor = user.id;
-          render();
-        } catch (e) {
-          console.error(e);
-          alert('数据载入失败：' + e.message + '\n\n如果是新账号，请先在 Supabase SQL Editor 执行 supabase-schema.sql 建表。');
-        } finally { booting = null; }
-      })();
+      if (!user) { bootedFor = null; render(); return; }   // 登出后，下次登录要重新装载
+      ensureBoot(user);
     });
     window.addEventListener('hashchange', render);
+    // 从后台切回前台时补渲染一次（已就绪则立即出内容）
+    document.addEventListener('visibilitychange', function () {
+      if (!document.hidden && store.state.user && store.state.ready) render();
+    });
   }
 
   return { boot: boot, render: render };

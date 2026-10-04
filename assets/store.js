@@ -116,12 +116,20 @@ QBZ.store = (function () {
   }
 
   /* ---------- 认证 ---------- */
+  var lastUserId = null;
   async function init() {
     var r = await sb.auth.getSession();
     state.user = r.data && r.data.session ? r.data.session.user : null;
+    lastUserId = state.user ? state.user.id : null;
     sb.auth.onAuthStateChange(function (_evt, session) {
-      state.user = session ? session.user : null;
-      state.ready = false;   // 重新加载
+      var u = session ? session.user : null;
+      var uid = u ? u.id : null;
+      state.user = u;
+      // 只有「换账号 / 登出」才需要整页重载。
+      // token 自动刷新（切屏回前台、长时间停留都会触发 TOKEN_REFRESHED）不能把 ready 置回 false，
+      // 否则界面会卡在「载入中」直到手动刷新。
+      if (uid !== lastUserId) state.ready = false;
+      lastUserId = uid;
       for (var i = 0; i < authListeners.length; i++) authListeners[i](state.user);
     });
     return state.user;

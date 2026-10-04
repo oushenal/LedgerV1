@@ -72,7 +72,8 @@ body {
 
 .sidebar-foot { margin-top: auto; padding: 12px; font-size: 12px; color: var(--sub); }
 
-.main { flex: 1; padding: 26px 30px 90px; max-width: 1120px; }
+/* 宽屏下把主体居中，避免右侧留下大片空白（max-width + auto 边距） */
+.main { flex: 1 1 auto; padding: 26px 30px 90px; max-width: 1280px; margin: 0 auto; }
 
 .topbar { display: flex; align-items: center; gap: 14px; margin-bottom: 22px; flex-wrap: wrap; }
 .page-title { font-size: 22px; font-weight: 700; }
@@ -80,6 +81,7 @@ body {
   border: 1px solid var(--line); border-radius: 10px;
   padding: 7px 10px; background: var(--card);
   color: var(--ink); font-size: 14px; font-family: inherit;
+  flex: 0 0 auto; white-space: nowrap;  /* 防止「2026-10」在窄屏折成两行 */
 }
 .sync-badge {
   margin-left: auto; font-size: 12.5px; color: var(--sub);
@@ -131,6 +133,7 @@ body {
   font-size: 14px; font-family: inherit; cursor: pointer;
   background: var(--primary); color: #fff; font-weight: 600;
   transition: filter .15s;
+  white-space: nowrap;   /* 按钮文字永不折行（「保存」曾被挤成两行） */
 }
 .btn:hover { filter: brightness(1.06); }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
@@ -172,9 +175,32 @@ label.field span { display: block; font-size: 13px; color: var(--sub); margin-bo
 .row-line .amt { font-weight: 700; font-size: 16px; white-space: nowrap; }
 .amt.neg { color: var(--danger); }
 
-.add-inline { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.add-inline .input { width: 110px; }
-.add-inline .input.note { flex: 1; min-width: 120px; }
+/* ---------- 记账行：大类块 ----------
+ * 结构：cat-head（图标 + 名称/额度 + 结余 + ➕）→ cat-sub（已登记，另起一行）→ cat-form（表单，独立一行）
+ * 这样展开表单时不会挤压名称与「已登记」 */
+.cat-block { padding: 13px 4px; border-bottom: 1px dashed var(--line); }
+.cat-block:last-child { border-bottom: none; }
+.cat-head { display: flex; align-items: center; gap: 12px; }
+.cat-head .grow { flex: 1; min-width: 0; }
+.cat-name-x { font-weight: 600; }
+.cat-head .desc, .bi-head .desc { font-size: 12.5px; color: var(--sub); margin-top: 2px; }
+.cat-bal { font-weight: 700; white-space: nowrap; }
+.cat-bal.neg { color: var(--danger); }
+.cat-sub {
+  margin-top: 7px; padding-left: 50px;
+  display: flex; flex-wrap: wrap; gap: 3px 16px;
+  font-size: 12.5px; color: var(--sub);
+}
+.cat-sub b { color: var(--ink); font-weight: 700; }
+.cat-form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 11px; padding-left: 50px; }
+.cat-form .input { width: 116px; flex: 0 0 auto; }
+.cat-form .input.note { flex: 1 1 150px; width: auto; min-width: 0; max-width: 420px; }
+.cat-form .btn { flex: 0 0 auto; padding: 8px 20px; }
+
+/* 本月收入：输入框自适应、按钮保持完整宽度 */
+.income-row { display: flex; gap: 10px; max-width: 380px; }
+.income-row .input { flex: 1 1 auto; width: auto; min-width: 0; }
+.income-row .btn { flex: 0 0 auto; }
 
 .icon-btn {
   width: 34px; height: 34px; border-radius: 10px; border: none;
@@ -183,6 +209,30 @@ label.field span { display: block; font-size: 13px; color: var(--sub); margin-bo
 }
 .icon-btn svg { width: 17px; height: 17px; }
 .icon-btn.plain { background: #EFEAE0; color: var(--ink); }
+
+/* ---------- 预算页：大类块 ----------
+ * 上半行只放图标 + 名称 + 删除；月额度/均摊/结转统一收到 bi-ctrl 第二行
+ * （手机端自然折行，不会再挤压文字） */
+.budget-item { padding: 14px 4px; border-bottom: 1px dashed var(--line); }
+.budget-item:last-child { border-bottom: none; }
+.bi-head { display: flex; align-items: center; gap: 12px; }
+.bi-head .grow { flex: 1; min-width: 0; }
+.bi-ctrl {
+  display: flex; align-items: center; gap: 10px 24px; flex-wrap: wrap;
+  margin-top: 12px; padding-left: 50px;
+}
+.bi-field { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--sub); }
+.bi-field .input.num { width: 104px; }
+
+/* 额度合计条 */
+.sum-bar {
+  display: flex; flex-wrap: wrap; gap: 12px 30px;
+  background: #FBF8F2; border: 1px solid var(--line); border-radius: 12px;
+  padding: 12px 16px; margin-bottom: 14px;
+}
+.sum-bar .k { display: block; font-size: 12.5px; color: var(--sub); }
+.sum-bar .v { font-weight: 700; font-size: 17px; }
+.sum-bar .v.over { color: var(--danger); }
 
 /* ---------- 表格 ---------- */
 .table-wrap { overflow-x: auto; }
@@ -303,5 +353,18 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
   .page-title { font-size: 19px; }
   .metric .value { font-size: 20px; }
   .topbar { margin-bottom: 16px; }
-  .sync-badge { padding: 5px 10px; }
+  .sync-badge { padding: 5px 10px; margin-left: auto; }
+
+  /* 日期框独占一行并拉大，避免「2026-10」被挤成两行 */
+  .month-picker { flex: 1 1 100%; width: 100%; padding: 10px 12px; font-size: 15px; }
+
+  /* 记账块：去掉左侧缩进，表单控件各占一行，空间充足 */
+  .cat-sub { padding-left: 0; }
+  .cat-form { padding-left: 0; }
+  .cat-form .input, .cat-form .input.note { flex: 1 1 100%; width: auto; }
+  .cat-form .btn { flex: 1 1 100%; }
+
+  /* 预算块：月额度/均摊/结转换行排布，不再挤压 */
+  .bi-ctrl { padding-left: 0; gap: 12px 20px; }
+  .bi-field .input.num { width: 96px; }
 }
