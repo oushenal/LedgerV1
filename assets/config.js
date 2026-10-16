@@ -1,7 +1,46 @@
-// 轻账本 · 连接配置
-// 注意：publishable(anon) key 设计为可公开（配合数据库 RLS 行级安全），随前端代码暴露无妨。
-// 切勿在此文件放入 service_role / secret key。
-window.QBZ_CONFIG = {
-  SUPABASE_URL: 'https://voovmircxyjgtdeygybe.supabase.co',
-  SUPABASE_KEY: 'sb_publishable_hWHU15toJd6N14B9qiLD_Q_xLvpdCsY',
+/* ============================================================
+   physics · 连接与外部地址配置
+   ------------------------------------------------------------
+   🔴 全站所有「站外地址」都集中在这里，别在别的文件里写死网址。
+   ============================================================ */
+window.PHYSICS_CONFIG = {
+
+  /* ---------- 作业发布：沿用现有线上地址，站内只做跳转 ---------- */
+  publish: {
+    url: 'https://18730003273146f4a7247dcce0b542fa.app.workbuddy.host',
+    external: true,   // true = 新标签页打开；false = 站内打开（暂未实现）
+  },
+
+  /* ---------- 杂项里的外链 ----------
+     加一条就往这个数组里加一项，不用改别的代码。 */
+  links: [
+    {
+      name: '住宿生大巴点名表',
+      url: 'https://oushenal.github.io/BusList/',
+      desc: '住宿生上车点名，按线路分页',
+      group: '点名 · 名单',
+    },
+  ],
+
+  /* ---------- Supabase（成绩归档 / 作业登记用） ----------
+     ⚠️ url 只填到**域名**，不要带 /rest/v1/ 尾巴 ——
+        supabase-js 会自己拼 /rest/v1/...，多一段就全错。
+     只填 publishable(anon) key —— 它设计为可公开，配合数据库 RLS 使用。
+     🔴 绝不能把 service_role / secret key 写在这里。 */
+  supabase: {
+    url: 'https://lpnyfeaenuypzukjkolp.supabase.co',
+    key: 'sb_publishable_CANRKaz-aDrnGcv2dRpyvg_dbqzqgaV',
+  },
+
+  /* ---------- 物理演示的存放位置（GitHub 仓库内路径） ----------
+     页面打开时会去列这个目录，把文件放进去就自动出现，不用改代码。
+     见 可行性讨论.md 第 1 节。 */
+  repo: {
+    owner: 'oushenal',
+    name: 'ForPhysicsTeacher_personal',   // 2026-10-17 已建好并部署
+    branch: 'main',
+    demosPath: 'apps/physics/demos',
+    // 线上地址（GitHub Pages），留作参考
+    pagesUrl: 'https://oushenal.github.io/ForPhysicsTeacher_personal/',
+  },
 };
